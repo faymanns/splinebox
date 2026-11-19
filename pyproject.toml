@@ -98,9 +98,10 @@ classifiers = [
 
 [project.optional-dependencies]
 test = [
-    "tox",
     "pytest",
-    "pytest-cov",
+]
+test-numpy = [
+    "splinebox[test]",
 ]
 test-torch = [
     "splinebox[test]",
