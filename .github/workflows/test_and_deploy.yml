@@ -24,43 +24,44 @@ jobs:
     strategy:
       matrix:
         platform: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
+        python-version: ['3.10', '3.11', '3.12', '3.13', '3.14', '3.15']
+        backend: [numpy, torch, jax]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
 
-      # note: if you need dependencies from conda, considering using
-      # setup-miniconda: https://github.com/conda-incubator/setup-miniconda
-      # and
-      # tox-conda: https://github.com/tox-dev/tox-conda
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install setuptools tox tox-gh-actions
+          python -m pip install -e ".[test-${{ matrix.backend }}]"
 
-      - name: Set up MSVC
-        if: runner.os == 'Windows'
-        uses: TheMrMilchmann/setup-msvc-dev@v4
-        with:
-          arch: x64
+      - name: Run test
+        run: |
+          python -m pytest -vx --color=yes # --cov=splinebox --cov-report=xml
 
-      # this runs the platform-specific tests declared in tox.ini
-      - name: Test with tox
-        env:
-          PLATFORM: ${{ matrix.platform }}
-          TORCHINDUCTOR_CACHE_DIR: ${{ runner.temp }}/torchinductor
-        run: python -m tox
+          # - name: Set up MSVC
+          #   if: runner.os == 'Windows'
+          #   uses: TheMrMilchmann/setup-msvc-dev@v4
+          #   with:
+          #     arch: x64
 
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v4
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-          slug: EPFL-Center-for-Imaging/splinebox
+          # # this runs the platform-specific tests declared in tox.ini
+          # - name: Test with tox
+          #   env:
+          #     PLATFORM: ${{ matrix.platform }}
+          #     TORCHINDUCTOR_CACHE_DIR: ${{ runner.temp }}/torchinductor
+          #   run: python -m tox
+
+          # - name: Upload coverage reports to Codecov
+          #   uses: codecov/codecov-action@v4
+          #   env:
+          #     CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          #     slug: EPFL-Center-for-Imaging/splinebox
 
   deploy:
     # this will run when you have tagged a commit, starting with "v*"
