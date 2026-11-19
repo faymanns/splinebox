@@ -100,6 +100,7 @@ classifiers = [
 test = [
     "pytest",
     "pytest-xdist",
+    "pytest-cov",
 ]
 test-numpy = [
     "splinebox[test]",

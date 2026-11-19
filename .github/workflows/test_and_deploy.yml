@@ -34,6 +34,7 @@ jobs:
         uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
+          cache: pip
 
       - name: Install dependencies
         run: |
@@ -41,27 +42,10 @@ jobs:
           python -m pip install -e ".[test-${{ matrix.backend }}]"
 
       - name: Run test
+        env:
+          SPLINEBOX_TEST_BACKENDS: "${{ matrix.backend }}" 
         run: |
-          SPLINEBOX_TEST_BACKENDS=${{ matrix.backend }} python -m pytest -n auto -vx --color=yes tests # --cov=splinebox --cov-report=xml
-
-          # - name: Set up MSVC
-          #   if: runner.os == 'Windows'
-          #   uses: TheMrMilchmann/setup-msvc-dev@v4
-          #   with:
-          #     arch: x64
-
-          # # this runs the platform-specific tests declared in tox.ini
-          # - name: Test with tox
-          #   env:
-          #     PLATFORM: ${{ matrix.platform }}
-          #     TORCHINDUCTOR_CACHE_DIR: ${{ runner.temp }}/torchinductor
-          #   run: python -m tox
-
-          # - name: Upload coverage reports to Codecov
-          #   uses: codecov/codecov-action@v4
-          #   env:
-          #     CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-          #     slug: EPFL-Center-for-Imaging/splinebox
+          python -m pytest -n auto -vx --color=yes tests # --cov=splinebox --cov-report=xml
 
 
   test-docs:
