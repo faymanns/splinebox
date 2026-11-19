@@ -99,6 +99,7 @@ classifiers = [
 [project.optional-dependencies]
 test = [
     "pytest",
+    "pytest-xdist",
 ]
 test-numpy = [
     "splinebox[test]",
