@@ -101,6 +101,7 @@ test = [
     "pytest",
     "pytest-xdist",
     "pytest-cov",
+    "pytest-html",
 ]
 test-numpy = [
     "splinebox[test]",
