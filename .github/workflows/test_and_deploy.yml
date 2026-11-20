@@ -52,7 +52,7 @@ jobs:
           SPLINEBOX_TEST_BACKENDS: "${{ matrix.backend }}" 
           # TORCHINDUCTOR_CACHE_DIR: ${{ runner.temp }}/torchinductor
         run: |
-          python -m pytest -n auto -vx --color=yes tests # --cov=splinebox --cov-report=xml
+          python -m pytest -n auto -x --color=yes tests
 
 
   test-docs:
@@ -99,7 +99,7 @@ jobs:
 
       - name: Run test
         run: |
-          python -m pytest -n auto -vx --color=yes --cov=splinebox --cov-report=xml tests
+          python -m pytest -n auto -x --color=yes --cov=splinebox --cov-report=xml tests
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v7
