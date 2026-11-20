@@ -799,7 +799,7 @@ class Spline:
         >>> splinebox.Spline.from_json(path_to_single_spline_json)
         splinebox.spline_curves.Spline(M=3, basis_function=splinebox.basis_functions.B1(), closed=True, control_points=np.array([[0.8, 1.2],
                [0.7, 1.5],
-               [1.1, 0.3]]))
+               [1.1, 0.3]], dtype=array_api_compat.numpy.dtype('float64')))
 
         """
         with open(path) as f:
@@ -3284,6 +3284,7 @@ def splines_to_json(path, splines, version=1):
     Create two random splines...
 
     >>> spline1 = splinebox.Spline(M=5, basis_function=splinebox.B3(), closed=False)
+    >>> spline1.control_points = np.random.rand(7, 3)
     >>> spline2 = splinebox.Spline(M=6, basis_function=splinebox.CatmullRom(), closed=True)
     >>> spline2.control_points = np.random.rand(6, 2)
 
