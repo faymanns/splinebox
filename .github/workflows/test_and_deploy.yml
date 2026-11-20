@@ -55,7 +55,7 @@ jobs:
         run: |
           python -m pytest \
             -n auto \
-            -dist=worksteal \
+            --dist=worksteal \
             -qq \
             --tb=short \
             --html=test-results.html \
@@ -99,7 +99,7 @@ jobs:
         run: |
           python -m pytest \
             -n auto \
-            -dist=worksteal \
+            --dist=worksteal \
             -qq \
             --tb=short \
             -x \
@@ -129,7 +129,7 @@ jobs:
         run: |
           python -m pytest \
             -n auto \
-            -dist=worksteal \
+            --dist=worksteal \
             -qq \
             --tb=short \
             --cov=splinebox \
