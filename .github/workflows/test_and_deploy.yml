@@ -14,43 +14,109 @@ on:
       - main
   workflow_dispatch:
 
-permissions:
-  contents: write
+# permissions:
+#   contents: write
 
 jobs:
   test:
-    name: ${{ matrix.platform }} py${{ matrix.python-version }}
+    name: ${{ matrix.platform }} py${{ matrix.python-version }} ${{ matrix.backend }}
     runs-on: ${{ matrix.platform }}
     strategy:
+      fail-fast: false
       matrix:
         platform: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        # python-version: ['3.10', '3.11', '3.12', '3.13', '3.14', '3.15']
+        python-version: ['3.10', '3.15']
+        backend: [numpy, torch, jax]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
+          cache: pip
 
-      # note: if you need dependencies from conda, considering using
-      # setup-miniconda: https://github.com/conda-incubator/setup-miniconda
-      # and
-      # tox-conda: https://github.com/tox-dev/tox-conda
+      - name: Set up MSVC
+        if: runner.os == 'Windows' && matrix.backend == 'torch'
+        uses: TheMrMilchmann/setup-msvc-dev@v4
+        with:
+          arch: x64
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install setuptools tox tox-gh-actions
+          python -m pip install -e ".[test-${{ matrix.backend }}]"
 
-      # this runs the platform-specific tests declared in tox.ini
-      - name: Test with tox
-        run: python -m tox
+      - name: Run test
         env:
-          PLATFORM: ${{ matrix.platform }}
+          SPLINEBOX_TEST_BACKENDS: "${{ matrix.backend }}" 
+          # TORCHINDUCTOR_CACHE_DIR: ${{ runner.temp }}/torchinductor
+        run: |
+          python -m pytest -n auto --dist=worksteal -x --color=yes --durations=20 tests
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results-${{ matrix.platform }}-py${{ matrix.python-version }}-${{ matrix.backend }}
+          path: test-results.html
+          if-no-files-found: ignore
+          retention-days: 7
+
+
+  test-docs:
+    name: test-docs py${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    needs: [test]
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.10', '3.11', '3.12', '3.13', '3.14', '3.15']
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[test,examples]"
+
+      - name: Run test
+        run: |
+          python -m pytest -n auto --dist=worksteal -x --color=yes --doctest-modules src
+
+
+  compute-coverage:
+    name: compute-coverage
+    runs-on: ubuntu-latest
+    needs: [test]
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v7
+        with:
+          python-version: 3.15
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[test,test-torch,test-jax]"
+
+      - name: Run test
+        run: |
+          python -m pytest -n auto --dist=worksteal --cov=splinebox --cov-report=xml -x tests
 
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v7
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
           slug: EPFL-Center-for-Imaging/splinebox
@@ -59,7 +125,7 @@ jobs:
     # this will run when you have tagged a commit, starting with "v*"
     # and requires that you have put your twine API key in your
     # github secrets (see readme for details)
-    needs: [test]
+    needs: [test,test-docs]
     runs-on: ubuntu-latest
     if: contains(github.ref, 'tags')
     steps:
